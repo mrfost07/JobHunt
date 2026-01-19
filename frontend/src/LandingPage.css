@@ -78,13 +78,13 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 8rem 6rem 4rem;
-    gap: 6rem;
+    padding: 8rem 4rem 4rem;
+    gap: 2rem;
 }
 
 .hero-content {
-    flex: 1;
-    max-width: 550px;
+    flex: 0 0 auto;
+    max-width: 450px;
     display: flex;
     flex-direction: column;
     justify-content: center;
