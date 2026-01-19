@@ -200,27 +200,25 @@ app.post('/api/test-email', requireAuth, async (req, res) => {
     }
 });
 
-// Get settings
-app.get('/api/settings', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
-        res.json(result.rows[0] || {});
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+// NOTE: GET /api/settings is defined later with proper auth check (line ~654)
 
-// Update settings
+// Update settings (requires authentication)
 app.post('/api/settings', async (req, res) => {
-    const { email, job_query, expected_salary, match_threshold, job_limit, auto_run } = req.body;
+    // Require authentication
+    if (!isUserAuthenticated(req)) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { job_query, expected_salary, match_threshold, job_limit, auto_run } = req.body;
+    const userEmail = req.user.email;
 
     try {
         const result = await pool.query(`
       UPDATE settings 
-      SET email = $1, job_query = $2, expected_salary = $3, match_threshold = $4, job_limit = $5, auto_run = $6, updated_at = NOW()
-      WHERE id = (SELECT id FROM settings ORDER BY id DESC LIMIT 1)
+      SET job_query = $1, expected_salary = $2, match_threshold = $3, job_limit = $4, auto_run = $5, updated_at = NOW()
+      WHERE email = $6
       RETURNING *
-    `, [email, job_query, expected_salary, match_threshold, job_limit || 30, auto_run]);
+    `, [job_query, expected_salary, match_threshold, job_limit || 30, auto_run, userEmail]);
 
         // Update scheduler based on auto_run setting
         if (auto_run && !schedulerTask) {
@@ -229,7 +227,13 @@ app.post('/api/settings', async (req, res) => {
             stopScheduler();
         }
 
-        res.json(result.rows[0]);
+        // Remove password_hash before returning
+        if (result.rows[0]) {
+            const { password_hash, ...safeSettings } = result.rows[0];
+            res.json(safeSettings);
+        } else {
+            res.status(404).json({ error: 'User settings not found' });
+        }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -336,8 +340,11 @@ app.get('/api/results', async (req, res) => {
     }
 });
 
-// Get run history
+// Get run history (requires authentication)
 app.get('/api/history', async (req, res) => {
+    if (!isUserAuthenticated(req)) {
+        return res.json([]);
+    }
     try {
         const result = await pool.query('SELECT * FROM run_history ORDER BY created_at DESC LIMIT 10');
         res.json(result.rows);
