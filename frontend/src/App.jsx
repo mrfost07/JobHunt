@@ -48,8 +48,14 @@ function App() {
       if (action === 'upgrade') {
         setShowUpgrade(true)
       }
-      // Clean URL
+      // Clean URL and reload user data after slight delay to ensure session is ready
       window.history.replaceState({}, '', window.location.pathname)
+      setTimeout(() => {
+        loadUser()
+        loadSettings()
+        loadResume()
+        loadResults()
+      }, 500)
     } else if (params.get('payment') === 'success') {
       verifyPayment()
       window.history.replaceState({}, '', window.location.pathname)

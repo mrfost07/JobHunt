@@ -528,6 +528,11 @@ app.post('/auth/signup', async (req, res) => {
 });
 
 app.get('/api/user', (req, res) => {
+    // Prevent caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     console.log('GET /api/user - Session ID:', req.sessionID);
     console.log('GET /api/user - isAuthenticated:', req.isAuthenticated());
     console.log('GET /api/user - req.user:', req.user);
