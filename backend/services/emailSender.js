@@ -31,8 +31,9 @@ export async function recordEmailUsage(pool, userId, email) {
   );
 }
 
-function generateJobHtml(job) {
-  const scoreColor = job.match_score >= 7 ? '#2e7d32' : job.match_score >= 4 ? '#f57c00' : '#e57373';
+function generateJobHtml(job, threshold = 7) {
+  // Simple colors: green if meets threshold, red if below
+  const scoreColor = job.match_score >= threshold ? '#2e7d32' : '#e53935';
 
   const cleanApplyLinks = job.apply_link
     ? job.apply_link.replace(/[;,]\s*/g, ' ')
@@ -97,7 +98,7 @@ export async function sendJobMatchEmail(recipientEmail, jobs, threshold = 0, poo
 
   let jobsHtml = '';
   for (const job of sortedJobs) {
-    jobsHtml += generateJobHtml(job);
+    jobsHtml += generateJobHtml(job, threshold);
   }
 
   const htmlContent = `
