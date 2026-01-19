@@ -2,9 +2,19 @@
 
 .landing-page {
     min-height: 100vh;
+    width: 100vw;
+    max-width: 100%;
     background: #0a0a0a;
     color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
 }
 
 /* Header */
