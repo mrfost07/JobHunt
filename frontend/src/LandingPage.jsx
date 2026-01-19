@@ -88,7 +88,7 @@ function LandingPage({ onGetStarted }) {
 
             {/* Footer */}
             <footer className="landing-footer">
-                <p>© 2024 JobHunt. AI-powered job matching.</p>
+                <p>© {new Date().getFullYear()} JobHunt. AI-powered job matching.</p>
             </footer>
         </div>
     )

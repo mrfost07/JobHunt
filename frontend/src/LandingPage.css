@@ -55,43 +55,47 @@
 }
 
 .landing-login-btn {
-    background: #fff;
-    color: #0a0a0a;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: #fff;
     border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    padding: 0.6rem 1.4rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(78, 205, 196, 0.3);
 }
 
 .landing-login-btn:hover {
-    background: #ddd;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(78, 205, 196, 0.5);
 }
 
 /* Hero Section */
 .landing-hero {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     min-height: 100vh;
-    padding: 8rem 4rem 4rem;
-    gap: 4rem;
+    padding: 8rem 6rem 4rem;
+    gap: 6rem;
 }
 
 .hero-content {
     flex: 1;
-    max-width: 600px;
+    max-width: 550px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .hero-title {
-    font-size: 4.5rem;
+    font-size: 4rem;
     font-weight: 300;
-    line-height: 1.1;
+    line-height: 1.15;
     margin: 0 0 1.5rem;
-    letter-spacing: -2px;
+    letter-spacing: -1.5px;
 }
 
 .hero-highlight {
@@ -103,35 +107,35 @@
 }
 
 .hero-subtitle {
-    font-size: 1.1rem;
-    color: #888;
-    line-height: 1.6;
-    margin: 0 0 2rem;
-    max-width: 450px;
+    font-size: 1.05rem;
+    color: #777;
+    line-height: 1.7;
+    margin: 0 0 2.5rem;
+    max-width: 420px;
 }
 
 .hero-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: center;
 }
 
 .hero-primary-btn {
-    background: #fff;
-    color: #0a0a0a;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: #fff;
     border: none;
-    padding: 0.9rem 2rem;
-    border-radius: 8px;
+    padding: 1rem 2.2rem;
+    border-radius: 50px;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(78, 205, 196, 0.3);
 }
 
 .hero-primary-btn:hover {
-    background: #f0f0f0;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(78, 205, 196, 0.5);
 }
 
 .hero-secondary-btn {
@@ -139,10 +143,12 @@
     text-decoration: none;
     font-size: 0.95rem;
     transition: color 0.2s;
+    border-bottom: 1px solid transparent;
 }
 
 .hero-secondary-btn:hover {
-    color: #fff;
+    color: #4ecdc4;
+    border-bottom-color: #4ecdc4;
 }
 
 /* Hero Visual */

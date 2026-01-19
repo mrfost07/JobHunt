@@ -1,7 +1,8 @@
 .login-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10,14 +11,15 @@
 }
 
 .login-modal {
-    background: #fff;
-    border-radius: 16px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 20px;
     max-width: 400px;
     width: 100%;
     padding: 40px 32px;
     position: relative;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
 }
 
 .login-close {
@@ -27,9 +29,14 @@
     background: none;
     border: none;
     font-size: 28px;
-    color: #999;
+    color: #666;
     cursor: pointer;
     line-height: 1;
+    transition: color 0.2s;
+}
+
+.login-close:hover {
+    color: #fff;
 }
 
 .login-header {
@@ -38,13 +45,13 @@
 
 .login-header h2 {
     font-size: 1.5rem;
-    font-weight: 700;
-    color: #222;
+    font-weight: 600;
+    color: #fff;
     margin-bottom: 8px;
 }
 
 .login-header p {
-    color: #666;
+    color: #888;
     font-size: 0.9375rem;
 }
 
@@ -113,70 +120,81 @@
 .form-field label {
     font-size: 0.75rem;
     font-weight: 500;
-    color: #666;
+    color: #888;
     margin-bottom: 6px;
     text-transform: uppercase;
 }
 
 .form-field input {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    padding: 12px 14px;
+    border: 1px solid #333;
+    border-radius: 8px;
     font-size: 0.9375rem;
-    background: #fff;
-    color: #333;
+    background: #0a0a0a;
+    color: #fff;
     transition: border-color 0.2s;
 }
 
 .form-field input:focus {
     outline: none;
-    border-color: #222;
+    border-color: #4ecdc4;
+}
+
+.form-field input::placeholder {
+    color: #555;
 }
 
 .submit-btn {
-    background: #222;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
     color: #fff;
     border: none;
-    padding: 12px;
-    border-radius: 8px;
+    padding: 14px;
+    border-radius: 50px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     margin-top: 8px;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
 }
 
 .submit-btn:hover {
-    background: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(78, 205, 196, 0.5);
 }
 
 .submit-btn:disabled {
-    background: #ccc;
+    background: #333;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 .login-error {
-    background: #ffebee;
-    color: #d32f2f;
+    background: rgba(211, 47, 47, 0.15);
+    color: #ff6b6b;
     padding: 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.875rem;
     text-align: center;
+    border: 1px solid rgba(211, 47, 47, 0.3);
 }
 
 .toggle-auth {
     margin-top: 24px;
     font-size: 0.875rem;
-    color: #666;
+    color: #888;
 }
 
 .toggle-auth button {
     background: none;
     border: none;
-    color: #222;
+    color: #4ecdc4;
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
-    padding: 0;
+}
+
+.toggle-auth button:hover {
+    color: #6ee7df;
 }
