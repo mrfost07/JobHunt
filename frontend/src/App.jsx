@@ -277,7 +277,7 @@ function App() {
               </div>
               <div className="progress-stats">
                 <span>{progress.current} / {progress.total}</span>
-                <span>Est. remaining: {formatTime(elapsedTime)}</span>
+                <span>{elapsedTime > 0 ? `Est. remaining: ${formatTime(elapsedTime)}` : 'Almost done...'}</span>
               </div>
             </div>
           )}

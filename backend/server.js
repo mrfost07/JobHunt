@@ -59,8 +59,11 @@ configureAuth();
 app.use(passport.initialize());
 app.use(passport.session());
 
-// JWT Secret
-const JWT_SECRET = process.env.SESSION_SECRET || 'jwt-secret-key';
+// JWT Secret - MUST be set in environment
+const JWT_SECRET = process.env.SESSION_SECRET;
+if (!JWT_SECRET) {
+    console.error('WARNING: SESSION_SECRET not set. JWT tokens will not work.');
+}
 
 // Generate JWT token for user
 const generateToken = (user) => {
@@ -86,7 +89,6 @@ const verifyToken = async (req, res, next) => {
                 profile_picture: decoded.profile_picture
             };
             req.isTokenAuth = true;
-            console.log('JWT verified for user:', decoded.email, 'id:', decoded.id);
         } catch (err) {
             console.log('JWT verification failed:', err.message);
         }
@@ -377,9 +379,14 @@ async function runWorkflow(targetUser = null) {
             throw new Error('No settings found');
         }
 
-        // Get latest resume
+        // Get user's resume (not global)
         workflowProgress.status = 'Loading resume...';
-        const resumeResult = await pool.query('SELECT * FROM resumes ORDER BY id DESC LIMIT 1');
+        let resumeResult;
+        if (targetUser) {
+            resumeResult = await pool.query('SELECT * FROM resumes WHERE user_id = $1 ORDER BY id DESC LIMIT 1', [targetUser.id]);
+        } else {
+            resumeResult = await pool.query('SELECT * FROM resumes ORDER BY id DESC LIMIT 1');
+        }
         const resume = resumeResult.rows[0];
 
         if (!resume) {
@@ -500,10 +507,17 @@ async function runWorkflow(targetUser = null) {
 }
 
 // ============== SCHEDULER ==============
+// NOTE: Scheduler is disabled for multi-user mode as it cannot run per-user
+// without proper user context. Each user should manually trigger job search.
 
 function startScheduler() {
     if (schedulerTask) return;
 
+    // Scheduler disabled for multi-user - would need to iterate all users with auto_run
+    console.log('Scheduler is disabled in multi-user mode');
+    return;
+
+    /*
     // Run every hour
     schedulerTask = cron.schedule('0 * * * *', async () => {
         console.log('Scheduled run starting...');
@@ -515,6 +529,7 @@ function startScheduler() {
     });
 
     console.log('Scheduler started (hourly)');
+    */
 }
 
 function stopScheduler() {
@@ -581,7 +596,9 @@ app.post('/auth/login', (req, res, next) => {
         if (!user) return res.status(400).json({ error: info.message });
         req.logIn(user, (err) => {
             if (err) return next(err);
-            return res.json({ success: true, user });
+            // Generate JWT token for consistency with Google OAuth
+            const token = generateToken(user);
+            return res.json({ success: true, user, token });
         });
     })(req, res, next);
 });
@@ -605,7 +622,10 @@ app.post('/auth/signup', async (req, res) => {
 
         req.logIn(newUser.rows[0], (err) => {
             if (err) return res.status(500).json({ error: 'Login failed after signup' });
-            res.json({ success: true, user: newUser.rows[0] });
+            // Generate JWT token and remove password_hash
+            const { password_hash, ...safeUser } = newUser.rows[0];
+            const token = generateToken(safeUser);
+            res.json({ success: true, user: safeUser, token });
         });
     } catch (error) {
         console.error('Signup error:', error);
@@ -699,12 +719,11 @@ app.get('/api/subscription', async (req, res) => {
 // Create GCash payment for Pro subscription
 app.post('/api/subscribe', async (req, res) => {
     try {
-        const settings = await pool.query('SELECT email FROM settings ORDER BY id DESC LIMIT 1');
-        const email = settings.rows[0]?.email;
-
-        if (!email) {
-            return res.status(400).json({ error: 'Please set your email first' });
+        // Use authenticated user's email
+        if (!isUserAuthenticated(req)) {
+            return res.status(401).json({ error: 'Authentication required' });
         }
+        const email = req.user.email;
 
         const baseUrl = req.headers.origin || `http://localhost:${process.env.PORT || 3001}`;
         const successUrl = `${baseUrl}?payment=success`;
@@ -732,12 +751,11 @@ app.post('/api/subscribe', async (req, res) => {
 // Verify payment after redirect
 app.post('/api/verify-payment', async (req, res) => {
     try {
-        const settings = await pool.query('SELECT email FROM settings ORDER BY id DESC LIMIT 1');
-        const email = settings.rows[0]?.email;
-
-        if (!email) {
-            return res.status(400).json({ error: 'No email found' });
+        // Use authenticated user's email
+        if (!isUserAuthenticated(req)) {
+            return res.status(401).json({ error: 'Authentication required' });
         }
+        const email = req.user.email;
 
         const sub = await pool.query('SELECT source_id FROM subscriptions WHERE email = $1', [email]);
 

@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Allow disabling email for platforms that block SMTP (e.g., Render free tier)
+const EMAIL_DISABLED = process.env.DISABLE_EMAIL === 'true';
+
 let transporter = null;
 
 function getTransporter() {
@@ -69,6 +72,12 @@ function generateJobHtml(job) {
 }
 
 export async function sendJobMatchEmail(recipientEmail, jobs, threshold = 0) {
+  // Skip if email is disabled (for platforms that block SMTP)
+  if (EMAIL_DISABLED) {
+    console.log('Email disabled via DISABLE_EMAIL env var. Skipping email to:', recipientEmail);
+    return false;
+  }
+
   console.log('Sending email to:', recipientEmail, 'with', jobs.length, 'jobs');
 
   const sortedJobs = [...jobs].sort((a, b) => b.match_score - a.match_score);

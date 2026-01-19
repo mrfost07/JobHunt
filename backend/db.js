@@ -33,8 +33,8 @@ export async function initDatabase() {
       )
     `);
 
-    // Add job_limit column if it doesn't exist
-    // Add job_limit column if it doesn't exist
+
+    // Add missing columns if they don't exist
     await client.query(`
       ALTER TABLE settings ADD COLUMN IF NOT EXISTS job_limit INTEGER DEFAULT 30;
       ALTER TABLE settings ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);

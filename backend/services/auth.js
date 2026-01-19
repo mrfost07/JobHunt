@@ -29,7 +29,9 @@ export function configureAuth() {
                     SET google_id = $1, display_name = $2, profile_picture = $3, updated_at = NOW()
                     WHERE email = $4
                 `, [googleId, displayName, photo, email]);
-                    return done(null, existingUser.rows[0]);
+                    // Remove sensitive fields before returning
+                    const { password_hash, ...safeUser } = existingUser.rows[0];
+                    return done(null, safeUser);
                 } else {
                     // Create new user
                     const newUser = await pool.query(`
@@ -37,7 +39,8 @@ export function configureAuth() {
                     VALUES ($1, $2, $3, $4, 50)
                     RETURNING *
                 `, [email, googleId, displayName, photo]);
-                    return done(null, newUser.rows[0]);
+                    const { password_hash: _, ...safeNewUser } = newUser.rows[0];
+                    return done(null, safeNewUser);
                 }
             } catch (error) {
                 return done(error, null);
@@ -64,7 +67,9 @@ export function configureAuth() {
                 return done(null, false, { message: 'Incorrect password.' });
             }
 
-            return done(null, user.rows[0]);
+            // Remove sensitive fields
+            const { password_hash, ...safeUser } = user.rows[0];
+            return done(null, safeUser);
         } catch (error) {
             return done(error);
         }
