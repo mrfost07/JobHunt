@@ -36,8 +36,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Trust proxy for Render (required for secure cookies behind reverse proxy)
+app.set('trust proxy', 1);
+
 // Session Config
-const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER || process.env.BACKEND_URL?.includes('render.com');
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
