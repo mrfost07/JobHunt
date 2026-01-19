@@ -527,22 +527,31 @@ app.get('/api/user', (req, res) => {
     }
 });
 
-// Update settings to use authenticated user if available
+// Get settings (returns defaults for non-authenticated users)
 app.get('/api/settings', async (req, res) => {
     try {
-        let email;
-        if (req.isAuthenticated()) {
-            email = req.user.email;
-        } else {
-            // Fallback for non-logged in
-            const settings = await pool.query('SELECT email FROM settings ORDER BY id DESC LIMIT 1');
-            email = settings.rows[0]?.email;
+        // Return default empty values for non-authenticated users
+        if (!req.isAuthenticated()) {
+            return res.json({
+                email: '',
+                job_query: 'Software Engineer',
+                expected_salary: 100000,
+                match_threshold: 7,
+                job_limit: 50,
+                auto_run: false
+            });
         }
 
-        if (!email) return res.json(null);
-
+        const email = req.user.email;
         const result = await pool.query('SELECT * FROM settings WHERE email = $1', [email]);
-        res.json(result.rows[0]);
+        res.json(result.rows[0] || {
+            email: email,
+            job_query: 'Software Engineer',
+            expected_salary: 100000,
+            match_threshold: 7,
+            job_limit: 50,
+            auto_run: false
+        });
     } catch (error) {
         console.error('Fetch settings error:', error);
         res.status(500).json({ error: 'Failed to fetch settings' });
