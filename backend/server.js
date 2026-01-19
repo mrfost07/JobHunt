@@ -462,8 +462,14 @@ app.get('/auth/google', (req, res, next) => {
 app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: process.env.FRONTEND_URL || 'http://localhost:5173' }),
     (req, res) => {
+        // Debug: Log session info after successful auth
+        console.log('=== GOOGLE OAUTH CALLBACK ===');
+        console.log('Session ID:', req.sessionID);
+        console.log('User:', req.user?.email);
+        console.log('isAuthenticated:', req.isAuthenticated());
+
         // Successful authentication
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
         let redirectUrl = `${frontendUrl}?login=success`;
 
@@ -478,7 +484,14 @@ app.get('/auth/google/callback',
             }
         }
 
-        res.redirect(redirectUrl);
+        // Force save session before redirect to ensure it persists
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+            }
+            console.log('Session saved, redirecting to:', redirectUrl);
+            res.redirect(redirectUrl);
+        });
     }
 );
 
