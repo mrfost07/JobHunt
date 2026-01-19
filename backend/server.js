@@ -298,11 +298,12 @@ app.get('/api/resume', async (req, res) => {
 // Run workflow manually
 app.post('/api/run', async (req, res) => {
     try {
-        // Store user ID in workflow progress for saving results
-        if (isUserAuthenticated(req) && req.user) {
-            workflowProgress.userId = req.user.id;
+        const currentUser = (isUserAuthenticated(req) && req.user) ? req.user : null;
+        if (!currentUser) {
+            return res.status(401).json({ error: 'Authentication required to run workflow' });
         }
-        const runResult = await runWorkflow();
+
+        const runResult = await runWorkflow(currentUser);
         res.json(runResult);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -345,8 +346,8 @@ app.get('/api/history', async (req, res) => {
 
 // ============== WORKFLOW LOGIC ==============
 
-async function runWorkflow() {
-    console.log('Starting workflow...');
+async function runWorkflow(targetUser = null) {
+    console.log('Starting workflow for user:', targetUser?.email || 'System Scheduler');
 
     // Reset progress
     workflowProgress = {
@@ -354,14 +355,23 @@ async function runWorkflow() {
         current: 0,
         total: 0,
         status: 'Starting...',
-        cancelled: false
+        cancelled: false,
+        userId: targetUser?.id // Preserve user ID!
     };
 
     try {
         // Get settings
+        let settings;
         workflowProgress.status = 'Loading settings...';
-        const settingsResult = await pool.query('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
-        const settings = settingsResult.rows[0];
+
+        if (targetUser) {
+            const settingsResult = await pool.query('SELECT * FROM settings WHERE email = $1', [targetUser.email]);
+            settings = settingsResult.rows[0];
+        } else {
+            // Fallback for scheduler (legacy behavior)
+            const settingsResult = await pool.query('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
+            settings = settingsResult.rows[0];
+        }
 
         if (!settings) {
             throw new Error('No settings found');
