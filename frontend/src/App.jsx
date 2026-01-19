@@ -34,28 +34,35 @@ function App() {
   const [showLogin, setShowLogin] = useState(false)
   const [loginIntent, setLoginIntent] = useState(null)
 
+  // Set up axios to include auth token in all requests
   useEffect(() => {
-    loadUser()
-    loadSettings()
-    loadResults()
-    loadResume()
-    loadSubscription()
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    }
+  }, [])
 
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
+    // Check if we're returning from OAuth with a token
     if (params.get('login') === 'success') {
+      const token = params.get('token')
+      if (token) {
+        // Store token in localStorage and set axios header
+        localStorage.setItem('authToken', token)
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        console.log('JWT token stored and set')
+      }
+
       setStatus({ message: 'Successfully logged in!', type: 'success' })
       const action = params.get('action')
       if (action === 'upgrade') {
         setShowUpgrade(true)
       }
-      // Clean URL and reload user data after slight delay to ensure session is ready
+
+      // Clean URL
       window.history.replaceState({}, '', window.location.pathname)
-      setTimeout(() => {
-        loadUser()
-        loadSettings()
-        loadResume()
-        loadResults()
-      }, 500)
     } else if (params.get('payment') === 'success') {
       verifyPayment()
       window.history.replaceState({}, '', window.location.pathname)
@@ -63,6 +70,13 @@ function App() {
       setStatus({ message: 'Payment was cancelled', type: 'error' })
       window.history.replaceState({}, '', window.location.pathname)
     }
+
+    // Load data after token is potentially set
+    loadUser()
+    loadSettings()
+    loadResults()
+    loadResume()
+    loadSubscription()
 
     return () => {
       if (progressRef.current) clearInterval(progressRef.current)
@@ -256,7 +270,11 @@ function App() {
               ) : (
                 <div className="user-avatar-placeholder">{user.display_name?.[0]}</div>
               )}
-              <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/auth/logout`} className="logout-link">Logout</a>
+              <button className="logout-link" onClick={() => {
+                localStorage.removeItem('authToken')
+                delete axios.defaults.headers.common['Authorization']
+                window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/auth/logout`
+              }}>Logout</button>
             </div>
           ) : (
             <button className="login-header-btn" onClick={() => setShowLogin(true)}>Sign In</button>

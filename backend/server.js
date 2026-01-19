@@ -17,6 +17,7 @@ import passport from 'passport';
 import session from 'express-session';
 import { configureAuth } from './services/auth.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 dotenv.config(); // Force restart 2
 
@@ -58,9 +59,49 @@ configureAuth();
 app.use(passport.initialize());
 app.use(passport.session());
 
+// JWT Secret
+const JWT_SECRET = process.env.SESSION_SECRET || 'jwt-secret-key';
+
+// Generate JWT token for user
+const generateToken = (user) => {
+    return jwt.sign(
+        { id: user.id, email: user.email, display_name: user.display_name, profile_picture: user.profile_picture },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+};
+
+// Verify JWT token middleware
+const verifyToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            // Fetch fresh user data from database
+            const result = await pool.query('SELECT * FROM settings WHERE email = $1', [decoded.email]);
+            if (result.rows.length > 0) {
+                req.user = result.rows[0];
+                req.isTokenAuth = true;
+            }
+        } catch (err) {
+            console.log('JWT verification failed:', err.message);
+        }
+    }
+    next();
+};
+
+// Apply token verification middleware
+app.use(verifyToken);
+
+// Authentication check - works with both session and JWT
+const isUserAuthenticated = (req) => {
+    return req.isAuthenticated() || req.isTokenAuth;
+};
+
 // Authentication middleware
 const requireAuth = (req, res, next) => {
-    if (!req.isAuthenticated()) {
+    if (!isUserAuthenticated(req)) {
         return res.status(401).json({ error: 'Authentication required' });
     }
     next();
@@ -464,14 +505,17 @@ app.get('/auth/google/callback',
     (req, res) => {
         // Debug: Log session info after successful auth
         console.log('=== GOOGLE OAUTH CALLBACK ===');
-        console.log('Session ID:', req.sessionID);
         console.log('User:', req.user?.email);
-        console.log('isAuthenticated:', req.isAuthenticated());
+
+        // Generate JWT token for the user
+        const token = generateToken(req.user);
+        console.log('JWT Token generated for user:', req.user?.email);
 
         // Successful authentication
         const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
-        let redirectUrl = `${frontendUrl}?login=success`;
+        // Include token in redirect URL
+        let redirectUrl = `${frontendUrl}?login=success&token=${token}`;
 
         if (req.query.state) {
             try {
@@ -484,14 +528,8 @@ app.get('/auth/google/callback',
             }
         }
 
-        // Force save session before redirect to ensure it persists
-        req.session.save((err) => {
-            if (err) {
-                console.error('Session save error:', err);
-            }
-            console.log('Session saved, redirecting to:', redirectUrl);
-            res.redirect(redirectUrl);
-        });
+        console.log('Redirecting to frontend with token');
+        res.redirect(redirectUrl);
     }
 );
 
@@ -547,11 +585,11 @@ app.get('/api/user', (req, res) => {
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
 
-    console.log('GET /api/user - Session ID:', req.sessionID);
-    console.log('GET /api/user - isAuthenticated:', req.isAuthenticated());
-    console.log('GET /api/user - req.user:', req.user);
-    console.log('GET /api/user - Cookies:', req.headers.cookie);
-    if (req.isAuthenticated()) {
+    console.log('GET /api/user - isTokenAuth:', req.isTokenAuth);
+    console.log('GET /api/user - isSessionAuth:', req.isAuthenticated());
+    console.log('GET /api/user - req.user:', req.user?.email);
+
+    if (isUserAuthenticated(req)) {
         res.json(req.user);
     } else {
         res.json(null);
