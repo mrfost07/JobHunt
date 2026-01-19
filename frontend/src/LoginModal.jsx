@@ -2,6 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import './LoginModal.css'
 
+axios.defaults.withCredentials = true
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 const GOOGLE_AUTH_URL = `${API_URL}/auth/google`
 

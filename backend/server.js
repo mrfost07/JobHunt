@@ -528,6 +528,10 @@ app.post('/auth/signup', async (req, res) => {
 });
 
 app.get('/api/user', (req, res) => {
+    console.log('GET /api/user - Session ID:', req.sessionID);
+    console.log('GET /api/user - isAuthenticated:', req.isAuthenticated());
+    console.log('GET /api/user - req.user:', req.user);
+    console.log('GET /api/user - Cookies:', req.headers.cookie);
     if (req.isAuthenticated()) {
         res.json(req.user);
     } else {
