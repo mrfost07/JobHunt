@@ -414,7 +414,8 @@ function App() {
 function JobCard({ job, threshold }) {
   const [open, setOpen] = useState(false)
   const isMatch = job.match_score >= threshold
-  const scoreClass = job.match_score >= 7 ? 'high' : job.match_score >= 4 ? 'medium' : 'low'
+  // Simple colors: green if meets threshold, red if below
+  const scoreClass = job.match_score >= threshold ? 'high' : 'low'
 
   const formatMatchReason = (reason) => {
     if (!reason) return null
