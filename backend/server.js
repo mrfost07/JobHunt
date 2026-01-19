@@ -295,6 +295,10 @@ app.get('/api/resume', async (req, res) => {
 // Run workflow manually
 app.post('/api/run', async (req, res) => {
     try {
+        // Store user ID in workflow progress for saving results
+        if (isUserAuthenticated(req) && req.user) {
+            workflowProgress.userId = req.user.id;
+        }
         const runResult = await runWorkflow();
         res.json(runResult);
     } catch (error) {
@@ -404,18 +408,23 @@ async function runWorkflow() {
         const goodMatches = matchedJobs.filter(j => j.match_score >= settings.match_threshold);
         console.log(`${goodMatches.length} jobs meet threshold`);
 
-        // Clear old matches and save new ones
-        await pool.query('DELETE FROM job_matches');
+        // Clear old matches for THIS USER only and save new ones
+        const userId = workflowProgress.userId;
+        if (userId) {
+            await pool.query('DELETE FROM job_matches WHERE user_id = $1', [userId]);
+        } else {
+            await pool.query('DELETE FROM job_matches WHERE user_id IS NULL');
+        }
 
         for (const job of matchedJobs) {
             await pool.query(`
         INSERT INTO job_matches 
-        (job_title, company, employment_type, remote, salary, benefits, responsibilities, qualifications, apply_link, match_score, match_reason)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        (job_title, company, employment_type, remote, salary, benefits, responsibilities, qualifications, apply_link, match_score, match_reason, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       `, [
                 job.job_title, job.company, job.employment_type, job.remote,
                 job.salary, job.benefits, job.responsibilities, job.qualifications,
-                job.apply_link, job.match_score, job.match_reason
+                job.apply_link, job.match_score, job.match_reason, userId
             ]);
         }
 
