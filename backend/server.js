@@ -314,17 +314,21 @@ app.get('/api/results', async (req, res) => {
     try {
         // Only return results if user is authenticated
         if (!isUserAuthenticated(req)) {
+            console.log('GET /api/results - Not authenticated, returning empty');
             return res.json([]);
         }
         const userId = req.user.id;
+        console.log('GET /api/results - Fetching for user_id:', userId);
         const result = await pool.query(`
       SELECT * FROM job_matches 
       WHERE user_id = $1
       ORDER BY created_at DESC, match_score DESC 
       LIMIT 50
     `, [userId]);
+        console.log('GET /api/results - Found', result.rows.length, 'jobs');
         res.json(result.rows);
     } catch (error) {
+        console.error('GET /api/results - Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -413,6 +417,7 @@ async function runWorkflow() {
 
         // Clear old matches for THIS USER only and save new ones
         const userId = workflowProgress.userId;
+        console.log('Saving jobs with user_id:', userId);
         if (userId) {
             await pool.query('DELETE FROM job_matches WHERE user_id = $1', [userId]);
         } else {
