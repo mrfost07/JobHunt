@@ -47,6 +47,7 @@ export async function initDatabase() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS resumes (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES settings(id),
         filename VARCHAR(255),
         raw_text TEXT,
         parsed_data JSONB,
@@ -54,10 +55,16 @@ export async function initDatabase() {
       )
     `);
 
+    // Add user_id column to resumes if not exists
+    await client.query(`
+      ALTER TABLE resumes ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES settings(id)
+    `);
+
     // Job matches table
     await client.query(`
       CREATE TABLE IF NOT EXISTS job_matches (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES settings(id),
         job_title TEXT,
         company TEXT,
         employment_type VARCHAR(100),
@@ -72,6 +79,11 @@ export async function initDatabase() {
         email_sent BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    // Add user_id column to job_matches if not exists
+    await client.query(`
+      ALTER TABLE job_matches ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES settings(id)
     `);
 
     // Alter existing columns to TEXT if they exist as VARCHAR

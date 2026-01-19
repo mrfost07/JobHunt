@@ -185,6 +185,9 @@ app.post('/api/upload', upload.single('resume'), async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
+        // Get user_id if authenticated
+        const userId = req.isAuthenticated() ? req.user.id : null;
+
         console.log('File received:', req.file.filename);
         const filePath = req.file.path;
         console.log('File path:', filePath);
@@ -197,11 +200,11 @@ app.post('/api/upload', upload.single('resume'), async (req, res) => {
         const parsedData = await parseResume(rawText);
         console.log('Resume parsed successfully');
 
-        // Save to database
+        // Save to database with user_id
         await pool.query(`
-      INSERT INTO resumes (filename, raw_text, parsed_data)
-      VALUES ($1, $2, $3)
-    `, [req.file.filename, rawText, JSON.stringify({ parsed: parsedData })]);
+      INSERT INTO resumes (user_id, filename, raw_text, parsed_data)
+      VALUES ($1, $2, $3, $4)
+    `, [userId, req.file.filename, rawText, JSON.stringify({ parsed: parsedData })]);
 
         console.log('Resume saved to database');
 
@@ -216,10 +219,18 @@ app.post('/api/upload', upload.single('resume'), async (req, res) => {
     }
 });
 
-// Get latest resume
+// Get latest resume (for authenticated user only)
 app.get('/api/resume', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM resumes ORDER BY id DESC LIMIT 1');
+        // Only return resume if user is authenticated
+        if (!req.isAuthenticated()) {
+            return res.json(null);
+        }
+        const userId = req.user.id;
+        const result = await pool.query(
+            'SELECT * FROM resumes WHERE user_id = $1 ORDER BY id DESC LIMIT 1',
+            [userId]
+        );
         res.json(result.rows[0] || null);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -236,14 +247,20 @@ app.post('/api/run', async (req, res) => {
     }
 });
 
-// Get latest results
+// Get latest results (for authenticated user only)
 app.get('/api/results', async (req, res) => {
     try {
+        // Only return results if user is authenticated
+        if (!req.isAuthenticated()) {
+            return res.json([]);
+        }
+        const userId = req.user.id;
         const result = await pool.query(`
       SELECT * FROM job_matches 
+      WHERE user_id = $1
       ORDER BY created_at DESC, match_score DESC 
       LIMIT 50
-    `);
+    `, [userId]);
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
