@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import './App.css'
 import LoginModal from './LoginModal'
+import LandingPage from './LandingPage'
 import CoffeeIcon from './assets/BuyMe.png'
 import GcashQR from './assets/BuyMe.jpg'
 
@@ -263,6 +264,16 @@ function App() {
   }
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
+
+  // Show landing page if not logged in
+  if (!user) {
+    return (
+      <>
+        <LandingPage onGetStarted={() => setShowLogin(true)} />
+        {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      </>
+    )
+  }
 
   return (
     <div className="app">
