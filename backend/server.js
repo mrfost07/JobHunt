@@ -236,7 +236,7 @@ app.post('/api/upload', upload.single('resume'), async (req, res) => {
         }
 
         // Get user_id if authenticated
-        const userId = req.isAuthenticated() ? req.user.id : null;
+        const userId = isUserAuthenticated(req) ? req.user.id : null;
 
         console.log('File received:', req.file.filename);
         const filePath = req.file.path;
@@ -273,7 +273,7 @@ app.post('/api/upload', upload.single('resume'), async (req, res) => {
 app.get('/api/resume', async (req, res) => {
     try {
         // Only return resume if user is authenticated
-        if (!req.isAuthenticated()) {
+        if (!isUserAuthenticated(req)) {
             return res.json(null);
         }
         const userId = req.user.id;
@@ -301,7 +301,7 @@ app.post('/api/run', async (req, res) => {
 app.get('/api/results', async (req, res) => {
     try {
         // Only return results if user is authenticated
-        if (!req.isAuthenticated()) {
+        if (!isUserAuthenticated(req)) {
             return res.json([]);
         }
         const userId = req.user.id;
@@ -600,11 +600,11 @@ app.get('/api/user', (req, res) => {
 app.get('/api/settings', async (req, res) => {
     try {
         // Return default empty values for non-authenticated users
-        if (!req.isAuthenticated()) {
+        if (!isUserAuthenticated(req)) {
             return res.json({
                 email: '',
-                job_query: 'Software Engineer',
-                expected_salary: 100000,
+                job_query: '',
+                expected_salary: '',
                 match_threshold: 7,
                 job_limit: 50,
                 auto_run: false
@@ -632,7 +632,7 @@ app.get('/api/settings', async (req, res) => {
 app.get('/api/subscription', async (req, res) => {
     try {
         // If not logged in, return free
-        if (!req.isAuthenticated()) {
+        if (!isUserAuthenticated(req)) {
             return res.json({ status: 'free', limit: parseInt(process.env.FREE_JOB_LIMIT) || 50 });
         }
 
