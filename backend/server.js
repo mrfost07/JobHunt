@@ -94,8 +94,13 @@ const verifyToken = async (req, res, next) => {
 // Apply token verification middleware
 app.use(verifyToken);
 
-// Authentication check - works with both session and JWT
+// Authentication check - ONLY use JWT for cross-origin (session cookies unreliable)
 const isUserAuthenticated = (req) => {
+    // In production, only trust JWT tokens (session cookies don't work cross-origin)
+    if (isProduction) {
+        return !!req.isTokenAuth;
+    }
+    // In development, accept both session and JWT
     return req.isAuthenticated() || req.isTokenAuth;
 };
 
