@@ -34,18 +34,10 @@ function App() {
   const [showLogin, setShowLogin] = useState(false)
   const [loginIntent, setLoginIntent] = useState(null)
 
-  // Set up axios to include auth token in all requests
-  useEffect(() => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    }
-  }, [])
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
 
-    // Check if we're returning from logout
+    // FIRST: Check if we're returning from logout - clear everything
     if (params.get('logout') === 'true') {
       // Clear token and auth header
       localStorage.removeItem('authToken')
@@ -69,7 +61,7 @@ function App() {
       return // Don't load data - user is logged out
     }
 
-    // Check if we're returning from OAuth with a token
+    // SECOND: Check if we're returning from OAuth with a new token
     if (params.get('login') === 'success') {
       const token = params.get('token')
       if (token) {
@@ -93,9 +85,15 @@ function App() {
     } else if (params.get('payment') === 'failed') {
       setStatus({ message: 'Payment was cancelled', type: 'error' })
       window.history.replaceState({}, '', window.location.pathname)
+    } else {
+      // THIRD: Normal page load - check for existing token in localStorage
+      const existingToken = localStorage.getItem('authToken')
+      if (existingToken) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${existingToken}`
+      }
     }
 
-    // Load data after token is potentially set
+    // Load data (will return empty for unauthenticated users)
     loadUser()
     loadSettings()
     loadResults()
