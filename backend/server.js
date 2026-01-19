@@ -37,11 +37,16 @@ app.use(cors({
 app.use(express.json());
 
 // Session Config
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false } // Set to true if using https
+    cookie: {
+        secure: isProduction, // true for HTTPS in production
+        sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
 }));
 
 // Passport Config
