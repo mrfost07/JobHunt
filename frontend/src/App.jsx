@@ -45,6 +45,30 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
 
+    // Check if we're returning from logout
+    if (params.get('logout') === 'true') {
+      // Clear token and auth header
+      localStorage.removeItem('authToken')
+      delete axios.defaults.headers.common['Authorization']
+
+      // Reset state to defaults
+      setUser(null)
+      setSettings({
+        email: '',
+        job_query: '',
+        expected_salary: '',
+        match_threshold: 7,
+        job_limit: 50,
+        auto_run: false
+      })
+      setResume(null)
+      setResults([])
+
+      setStatus({ message: 'Successfully logged out!', type: 'success' })
+      window.history.replaceState({}, '', window.location.pathname)
+      return // Don't load data - user is logged out
+    }
+
     // Check if we're returning from OAuth with a token
     if (params.get('login') === 'success') {
       const token = params.get('token')

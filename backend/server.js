@@ -536,7 +536,8 @@ app.get('/auth/google/callback',
 app.get('/auth/logout', (req, res, next) => {
     req.logout((err) => {
         if (err) { return next(err); }
-        res.redirect(process.env.FRONTEND_URL || 'http://localhost:5173');
+        const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+        res.redirect(`${frontendUrl}?logout=true`);
     });
 });
 
