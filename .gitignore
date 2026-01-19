@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 .env
+!.env.production
 
 # Build outputs
 dist/
