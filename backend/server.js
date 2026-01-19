@@ -150,8 +150,8 @@ app.get('/api/settings', async (req, res) => {
     }
 });
 
-// Update settings (requires authentication)
-app.post('/api/settings', requireAuth, async (req, res) => {
+// Update settings
+app.post('/api/settings', async (req, res) => {
     const { email, job_query, expected_salary, match_threshold, job_limit, auto_run } = req.body;
 
     try {
@@ -226,8 +226,8 @@ app.get('/api/resume', async (req, res) => {
     }
 });
 
-// Run workflow manually (requires authentication)
-app.post('/api/run', requireAuth, async (req, res) => {
+// Run workflow manually
+app.post('/api/run', async (req, res) => {
     try {
         const runResult = await runWorkflow();
         res.json(runResult);
