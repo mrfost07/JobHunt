@@ -78,12 +78,15 @@ const verifyToken = async (req, res, next) => {
         const token = authHeader.substring(7);
         try {
             const decoded = jwt.verify(token, JWT_SECRET);
-            // Fetch fresh user data from database
-            const result = await pool.query('SELECT * FROM settings WHERE email = $1', [decoded.email]);
-            if (result.rows.length > 0) {
-                req.user = result.rows[0];
-                req.isTokenAuth = true;
-            }
+            // Use decoded token data directly - contains id, email, display_name, profile_picture
+            req.user = {
+                id: decoded.id,
+                email: decoded.email,
+                display_name: decoded.display_name,
+                profile_picture: decoded.profile_picture
+            };
+            req.isTokenAuth = true;
+            console.log('JWT verified for user:', decoded.email, 'id:', decoded.id);
         } catch (err) {
             console.log('JWT verification failed:', err.message);
         }
