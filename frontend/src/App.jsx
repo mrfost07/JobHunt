@@ -238,7 +238,7 @@ function App() {
       const res = await axios.post(`${API_URL}/run`)
       let msg = ''
       if (res.data.emailSent) {
-        msg = `Found ${res.data.jobsMatched} matches. Email sent.`
+        msg = `Found ${res.data.jobsMatched} matches. Email sent! Check your inbox.`
       } else if (res.data.jobsMatched === 0) {
         msg = `No matches found. Try lowering the minimum score.`
       } else {
