@@ -1,35 +1,39 @@
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Allow disabling email for platforms that block SMTP (e.g., Render free tier)
-const EMAIL_DISABLED = process.env.DISABLE_EMAIL === 'true';
+// Daily email limit per user
+const DAILY_EMAIL_LIMIT = parseInt(process.env.DAILY_EMAIL_LIMIT) || 5;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'JobHunt <noreply@resend.dev>';
 
-let transporter = null;
+// Check if user has exceeded daily email limit
+export async function checkEmailLimit(pool, userId) {
+  const result = await pool.query(`
+    SELECT COUNT(*) as count FROM email_usage 
+    WHERE user_id = $1 
+    AND sent_at > NOW() - INTERVAL '24 hours'
+  `, [userId]);
 
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // Use STARTTLS
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-      },
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
-      socketTimeout: 30000
-    });
-  }
-  return transporter;
+  const count = parseInt(result.rows[0].count);
+  return {
+    remaining: Math.max(0, DAILY_EMAIL_LIMIT - count),
+    limit: DAILY_EMAIL_LIMIT,
+    exceeded: count >= DAILY_EMAIL_LIMIT
+  };
+}
+
+// Record email usage
+export async function recordEmailUsage(pool, userId, email) {
+  await pool.query(
+    'INSERT INTO email_usage (user_id, email) VALUES ($1, $2)',
+    [userId, email]
+  );
 }
 
 function generateJobHtml(job) {
   const scoreColor = job.match_score >= 7 ? '#2e7d32' : job.match_score >= 4 ? '#f57c00' : '#e57373';
 
-  // Clean apply links - remove commas and semicolons between links
   const cleanApplyLinks = job.apply_link
     ? job.apply_link.replace(/[;,]\s*/g, ' ')
     : '';
@@ -71,14 +75,23 @@ function generateJobHtml(job) {
     </div>`;
 }
 
-export async function sendJobMatchEmail(recipientEmail, jobs, threshold = 0) {
-  // Skip if email is disabled (for platforms that block SMTP)
-  if (EMAIL_DISABLED) {
-    console.log('Email disabled via DISABLE_EMAIL env var. Skipping email to:', recipientEmail);
-    return false;
+export async function sendJobMatchEmail(recipientEmail, jobs, threshold = 0, pool = null, userId = null) {
+  // Check if Resend API key is configured
+  if (!RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not configured. Skipping email.');
+    return { sent: false, reason: 'Email service not configured' };
   }
 
-  console.log('Sending email to:', recipientEmail, 'with', jobs.length, 'jobs');
+  // Check rate limit if pool and userId provided
+  if (pool && userId) {
+    const limit = await checkEmailLimit(pool, userId);
+    if (limit.exceeded) {
+      console.log(`Email limit exceeded for user ${userId}. Remaining: ${limit.remaining}/${limit.limit}`);
+      return { sent: false, reason: `Daily email limit reached (${limit.limit}/day)`, remaining: 0 };
+    }
+  }
+
+  console.log('Sending email via Resend to:', recipientEmail, 'with', jobs.length, 'jobs');
 
   const sortedJobs = [...jobs].sort((a, b) => b.match_score - a.match_score);
 
@@ -105,18 +118,40 @@ export async function sendJobMatchEmail(recipientEmail, jobs, threshold = 0) {
 </body>
 </html>`;
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    throw new Error('Gmail credentials not configured');
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: recipientEmail,
+        subject: `JobHunt: ${jobs.length} Jobs Found`,
+        html: htmlContent
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Resend API error:', data);
+      return { sent: false, reason: data.message || 'Failed to send email' };
+    }
+
+    console.log('Email sent via Resend:', data.id);
+
+    // Record email usage
+    if (pool && userId) {
+      await recordEmailUsage(pool, userId, recipientEmail);
+      const newLimit = await checkEmailLimit(pool, userId);
+      return { sent: true, id: data.id, remaining: newLimit.remaining };
+    }
+
+    return { sent: true, id: data.id };
+  } catch (error) {
+    console.error('Error sending email via Resend:', error.message);
+    return { sent: false, reason: error.message };
   }
-
-  const transport = getTransporter();
-  const result = await transport.sendMail({
-    from: process.env.GMAIL_USER,
-    to: recipientEmail,
-    subject: `JobHunt: ${jobs.length} Jobs`,
-    html: htmlContent
-  });
-
-  console.log('Email sent:', result.messageId);
-  return true;
 }

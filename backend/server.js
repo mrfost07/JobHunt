@@ -463,15 +463,20 @@ async function runWorkflow(targetUser = null) {
 
         // Send email only if we have jobs meeting the threshold
         let emailSent = false;
+        let emailResult = null;
         if (goodMatches.length > 0) {
             console.log(`Attempting to send email to ${settings.email} with ${goodMatches.length} jobs meeting threshold...`);
             try {
-                await sendJobMatchEmail(settings.email, goodMatches, settings.match_threshold);
-                emailSent = true;
-                console.log(`Email sent successfully to ${settings.email}!`);
+                // Pass pool and userId for rate limiting
+                emailResult = await sendJobMatchEmail(settings.email, goodMatches, settings.match_threshold, pool, userId);
+                emailSent = emailResult.sent;
+                if (emailSent) {
+                    console.log(`Email sent successfully! Remaining today: ${emailResult.remaining}/${5}`);
+                } else {
+                    console.log(`Email not sent: ${emailResult.reason}`);
+                }
             } catch (emailError) {
                 console.error('Email failed:', emailError.message);
-                console.error('Full error:', emailError);
             }
         } else {
             console.log(`No jobs meet threshold of ${settings.match_threshold} - email not sent`);

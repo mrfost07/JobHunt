@@ -107,6 +107,16 @@ export async function initDatabase() {
       )
     `);
 
+    // Email usage tracking table (for rate limiting)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS email_usage (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES settings(id),
+        email VARCHAR(255),
+        sent_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     // Subscriptions table
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscriptions (
