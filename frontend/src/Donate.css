@@ -1,0 +1,106 @@
+.donate-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.donate-modal {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 380px;
+    width: 100%;
+    padding: 32px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.donate-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.donate-close:hover {
+    color: #333;
+}
+
+.donate-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.donate-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 6px;
+}
+
+.donate-header p {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.donate-qr {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.donate-qr img {
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.donate-instructions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.donate-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.875rem;
+    color: #444;
+}
+
+.step-num {
+    width: 24px;
+    height: 24px;
+    background: #222;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.donate-footer {
+    text-align: center;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.donate-footer p {
+    font-size: 0.8125rem;
+    color: #888;
+}
