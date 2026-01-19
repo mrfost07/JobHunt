@@ -214,7 +214,14 @@ function App() {
 
     setLoadingMessage('Searching...')
 
-    timerRef.current = setInterval(() => setElapsedTime(t => t + 1), 1000)
+    // Initialize reverse timer (Estimate 4s per job)
+    const estimatedTotal = settings.job_limit * 4;
+    setElapsedTime(estimatedTotal);
+
+    timerRef.current = setInterval(() => {
+      setElapsedTime(t => (t > 0 ? t - 1 : 0))
+    }, 1000)
+
     progressRef.current = setInterval(async () => {
       try {
         const res = await axios.get(`${API_URL}/progress`)
@@ -270,7 +277,7 @@ function App() {
               </div>
               <div className="progress-stats">
                 <span>{progress.current} / {progress.total}</span>
-                <span>{formatTime(elapsedTime)}</span>
+                <span>Est. remaining: {formatTime(elapsedTime)}</span>
               </div>
             </div>
           )}

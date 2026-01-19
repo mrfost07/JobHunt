@@ -386,6 +386,7 @@ async function runWorkflow(targetUser = null) {
             throw new Error('No resume uploaded');
         }
 
+        workflowProgress.status = 'Parsing resume...';
         const parsedResume = resume.parsed_data?.parsed || resume.raw_text;
 
         // Search for jobs
