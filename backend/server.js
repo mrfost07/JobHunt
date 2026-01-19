@@ -26,12 +26,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// CORS - make origin flexible for trailing slashes
+const frontendOrigin = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+const backendOrigin = (process.env.BACKEND_URL || 'http://localhost:3001').replace(/\/$/, '');
+console.log('CORS Origins:', { frontendOrigin, backendOrigin });
+
 app.use(cors({
-    origin: [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
-        process.env.BACKEND_URL || 'http://localhost:3001'
-    ],
+    origin: [frontendOrigin, backendOrigin],
     credentials: true
 }));
 app.use(express.json());
