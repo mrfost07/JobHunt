@@ -1,7 +1,13 @@
 # Dependencies
 node_modules/
+
+# Environment files (all .env files)
 .env
-!.env.production
+.env.*
+*.env.production
+
+# Sensitive files
+JobHunt.json
 
 # Build outputs
 dist/
